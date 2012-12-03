@@ -29,6 +29,7 @@ bar_scale = d3.scale.linear()
 
 color_scale = d3.scale.linear()
   .range(["#DEA3A1", "#B1302D"])
+  .clamp(true)
   # .range(["#BDC9E1", "#045A8D"])
 
 projection = d3.geo.satellite()
@@ -50,20 +51,24 @@ graticule = d3.geo.graticule()
 
 update_lines = () ->
   points.selectAll(".point").attr "d", (d,i) ->
-    "M"+projection(d.lon_lat) + "l 0 " + bar_scale(d[size_key])
+    "M"+projection(d.lon_lat) + "l 0 " + bar_scale(parseFloat(d[size_key]))
 
 update_color = () ->
-  color_scale.domain([0, d3.max(data, (d) -> d[color_key])])
+  if color_key == "rent_prsf"
+    color_scale.domain([0, 45])
+    # color_scale.domain([0, d3.max(data, (d) -> parseFloat(d[color_key]))])
+  else
+    color_scale.domain([0, d3.max(data, (d) -> parseFloat(d[color_key]))])
   update_key()
   points.selectAll(".point")
-    .attr "stroke", (d,i) -> color_scale(d[color_key])
+    .attr "stroke", (d,i) -> color_scale(parseFloat(d[color_key]))
 
 update_size = () ->
-  bar_scale.domain(d3.extent(data, (d) -> d[size_key]))
+  bar_scale.domain(d3.extent(data, (d) -> parseFloat(d[size_key])))
   points.selectAll(".point").transition()
     .duration(400)
     .attr "d", (d,i) ->
-      "M"+projection(d.lon_lat) + "l 0 " + bar_scale(d[size_key])
+      "M"+projection(d.lon_lat) + "l 0 " + parseFloat(bar_scale(d[size_key]))
 
 
 update_map = () ->
@@ -110,7 +115,14 @@ update_key = () ->
     .attr("x", (d,i) -> if i == 0 then 25 else (25 + 120))
     .attr("y", (d,i) -> height - 25)
     .attr("text-anchor", "middle")
-    .text((d) -> if color_key == "percent_govt_leased" then "#{Math.round(d)}%" else Math.round(d))
+    .text (d,i) ->
+      if color_key == "percent_govt_leased"
+        "#{Math.round(d)}%"
+      else
+        if i == 1
+          "#{Math.round(d)}+"
+        else
+          Math.round(d)
 
 create_key = () ->
   key = svg.append("g")
@@ -161,8 +173,8 @@ $ ->
 
   display_bars = (error, bar_data) ->
     data = bar_data
-    bar_scale.domain(d3.extent(data, (d) -> d[size_key]))
-    color_scale.domain([0,d3.max(data, (d) -> d[color_key])])
+    bar_scale.domain(d3.extent(data, (d) -> parseFloat(d[size_key])))
+    color_scale.domain([0,d3.max(data, (d) -> parseFloat(d[color_key]))])
 
     create_key()
 
@@ -173,7 +185,7 @@ $ ->
       .data(data).enter()
       .append("path")
       .attr("class", "point")
-      .attr("stroke", (d) -> color_scale(d[color_key]))
+      .attr("stroke", (d) -> color_scale(parseFloat(d[color_key])))
       .attr("stroke-width", 4)
       .attr("opacity", 0.9)
       .on("mouseover", show_tooltip)
