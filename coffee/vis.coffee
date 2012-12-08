@@ -11,6 +11,7 @@ svg = null
 key = null
 start_pos = [98.00, -35.50]
 start_scale = 1000
+zoom_start = [270,160]
 
 tooltip = Tooltip("vis-tooltip", 230)
 
@@ -28,7 +29,8 @@ bar_scale = d3.scale.linear()
   .range([-2, -120])
 
 color_scale = d3.scale.linear()
-  .range(["#DEA3A1", "#B1302D"])
+  # .range(["#DEA3A1", "#B1302D"])
+  .range(["#6BAED6", "#B1302D"])
   .clamp(true)
   # .range(["#BDC9E1", "#045A8D"])
 
@@ -46,7 +48,7 @@ path = d3.geo.path()
   .projection(projection)
 
 graticule = d3.geo.graticule()
-  .extent([[-142, 23], [-47 + 1e-6, 67 + 1e-6]])
+  .extent([[-192, 13], [-47 + 1e-6, 88 + 1e-6]])
   .step([5, 5])
 
 update_lines = () ->
@@ -71,17 +73,37 @@ update_size = () ->
       "M"+projection(d.lon_lat) + "l 0 " + parseFloat(bar_scale(d[size_key]))
 
 
+rScale1 = d3.scale.linear()
+  # .domain([0, width])
+  .domain([-100, 300])
+  .range([50, 100])
+
+rScale2 = d3.scale.linear()
+  # .domain([0, height])
+  .domain([0,200])
+  .range([-20, -40])
+
+
 update_map = () ->
   map.attr("d", path)
   graticule.attr("d", path)
   update_lines()
 
 zoomer = () ->
-  projection.translate(d3.event.translate).scale(d3.event.scale)
+  # p = d3.mouse(this)
+  p = d3.event.translate
+  # console.log( "p" + p)
+  # console.log("translate " + d3.event.translate)
+  projection.rotate([rScale1(p[0]), rScale2(p[1])]).scale(d3.event.scale)
+  # console.log("rotate" + projection.rotate())
   update_map()
 
+console.log(projection.translate())
+console.log(projection.rotate())
+
 zoom = d3.behavior.zoom()
-  .translate(projection.translate())
+  # .translate([projection.rotate()[0], projection.rotate()[1]])
+  .translate(zoom_start)
   .scale(projection.scale())
   .scaleExtent([930, 9120])
   .on("zoom", zoomer)
@@ -91,6 +113,7 @@ reset_projection = () ->
     .scale(start_scale)
     .rotate([start_pos[0], start_pos[1], 0])
     .translate(starting_translate)
+  zoom.translate(zoom_start).scale(projection.scale())
   update_map()
 
 size_key = "total_leased_rsf"
