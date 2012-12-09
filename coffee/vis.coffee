@@ -12,6 +12,7 @@ key = null
 start_pos = [98.00, -35.50]
 start_scale = 1000
 zoom_start = [270,160]
+last_drag = zoom_start
 
 tooltip = Tooltip("vis-tooltip", 230)
 
@@ -19,7 +20,7 @@ show_tooltip = (d,i) ->
   content = '<p class="main">' + d.city + ", " + d.state + '</p>'
   content += '<hr class="tooltip-hr">'
   content += '<span class="name">Leased SF: </span><span class="value">' + fixUp(d.total_leased_rsf) + '</span><br/>'
-  content += '<span class="name">Total Rent: </span><span class="value">' + fixUp(d.total_annual_rent) + '</span><br/>'
+  content += '<span class="name">Total Rent: </span><span class="value">$' + fixUp(d.total_annual_rent) + '</span><br/>'
   tooltip.showTooltip(content,d3.event)
 
 hide_tooltip = (d,i) ->
@@ -89,24 +90,50 @@ update_map = () ->
   graticule.attr("d", path)
   update_lines()
 
+last_zoom = projection.scale()
+
 zoomer = () ->
   # p = d3.mouse(this)
-  p = d3.event.translate
+  # p = d3.event.translate
   # console.log( "p" + p)
   # console.log("translate " + d3.event.translate)
-  projection.rotate([rScale1(p[0]), rScale2(p[1])]).scale(d3.event.scale)
+  # projection.rotate([rScale1(p[0]), rScale2(p[1])])
+  if d3.event.scale != projection.scale()
+    projection.scale(d3.event.scale)
+    update_map()
+
+
+tilter = () ->
+  projection.distance(d3.event.scale)
   # console.log("rotate" + projection.rotate())
   update_map()
 
-console.log(projection.translate())
-console.log(projection.rotate())
+dragger = () ->
+  p = d3.event
+  # console.log(p)
+  rotate = [rScale1(p.x), rScale2(p.y)]
+  projection.rotate(rotate)
+  last_drag = [p.x, p.y]
+  update_map()
+
+# console.log(projection.translate())
+# console.log(projection.rotate())
 
 zoom = d3.behavior.zoom()
   # .translate([projection.rotate()[0], projection.rotate()[1]])
-  .translate(zoom_start)
+  # .translate(zoom_start)
   .scale(projection.scale())
   .scaleExtent([930, 9120])
   .on("zoom", zoomer)
+
+# zoom = d3.behavior.zoom()
+#   .scale(projection.distance())
+#   .scaleExtent([1, 1.4])
+#   .on("zoom", tilter)
+
+drag = d3.behavior.drag()
+  .origin((d) -> {x: last_drag[0], y: last_drag[1]})
+  .on("drag", dragger)
 
 reset_projection = () ->
   projection
@@ -114,6 +141,7 @@ reset_projection = () ->
     .rotate([start_pos[0], start_pos[1], 0])
     .translate(starting_translate)
   zoom.translate(zoom_start).scale(projection.scale())
+  last_drag = zoom_start
   update_map()
 
 size_key = "total_leased_rsf"
@@ -181,6 +209,7 @@ $ ->
   svg = d3.select("#vis").append("svg")
     .attr("width", width)
     .attr("height", height)
+    .call(drag)
     .call(zoom)
 
   svg.append("rect")
@@ -222,7 +251,7 @@ $ ->
       .attr("d", path)
 
 
-    d3.json("data/properties_all.json", display_bars)
+    d3.json("data/properties.json", display_bars)
 
 
   d3.json("data/us-states.json", display_map)

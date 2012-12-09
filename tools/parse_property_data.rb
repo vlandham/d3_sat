@@ -13,8 +13,8 @@ agg_values = ["percent_govt_leased", "rent_prsf", "total_leased_rsf", "total_ann
 
 CSV.foreach(input_filename, :headers => true) do |row|
 
-  # key = row["city"] + "_" + row["state"]
-  key = row["city"] + "_" + row["state"] + row["gsa_building_no"]
+  key = row["city"] + "_" + row["state"]
+  # key = row["city"] + "_" + row["state"] + row["gsa_building_no"]
 
   if !cities[key]
     data = {"city" => row["city"], "state" => row["state"], "zip" => row["zipcode"]}
@@ -25,7 +25,9 @@ CSV.foreach(input_filename, :headers => true) do |row|
   end
 
   agg_values.each do |v|
-    cities[key][v] += row[v].to_f
+    if row[v].to_f > cities[key][v].to_f
+      cities[key][v] = row[v].to_f
+    end
   end
 
   cities[key]["count"] += 1
@@ -47,13 +49,13 @@ end
 
 data = cities.values.sort {|a,b| b["count"] <=> a["count"]}
 
-data.each do |city|
-  agg_values.each do |v|
-    city[v] = city[v].round(3)
-    avg_key = v+"_avg"
-    city[avg_key] = (city[v] / city["count"]).round(3)
-  end
-end
+# data.each do |city|
+#   agg_values.each do |v|
+#     city[v] = city[v].round(3)
+#     avg_key = v+"_avg"
+#     city[avg_key] = (city[v] / city["count"]).round(3)
+#   end
+# end
 
 File.open(output_filename, 'w') do |file|
   file.puts JSON.pretty_generate(JSON.parse(data.to_json))
