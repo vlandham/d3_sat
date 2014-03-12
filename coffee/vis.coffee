@@ -19,8 +19,8 @@ tooltip = Tooltip("vis-tooltip", 230)
 show_tooltip = (d,i) ->
   content = '<p class="main">' + d.city + ", " + d.state + '</p>'
   content += '<hr class="tooltip-hr">'
-  content += '<span class="name">Leased SF: </span><span class="value">' + fixUp(d.total_leased_rsf) + '</span><br/>'
-  content += '<span class="name">Total Rent: </span><span class="value">$' + fixUp(d.total_annual_rent) + '</span><br/>'
+  content += '<span class="name">Amount: </span><span class="value">' + fixUp(d.total_leased_rsf) + '</span><br/>'
+  content += '<span class="name">Amount 2: </span><span class="value">$' + fixUp(d.total_annual) + '</span><br/>'
   tooltip.showTooltip(content,d3.event)
 
 hide_tooltip = (d,i) ->
@@ -57,7 +57,7 @@ update_lines = () ->
     "M"+projection(d.lon_lat) + "l 0 " + bar_scale(parseFloat(d[size_key]))
 
 update_color = () ->
-  if color_key == "rent_prsf"
+  if color_key == "amount_per"
     color_scale.domain([0, 45])
     # color_scale.domain([0, d3.max(data, (d) -> parseFloat(d[color_key]))])
   else
@@ -145,7 +145,7 @@ reset_projection = () ->
   update_map()
 
 size_key = "total_leased_rsf"
-color_key = "percent_govt_leased"
+color_key = "percent_amount"
 
 toggle_map = (type, new_key) ->
   if type == 'size'
@@ -167,7 +167,7 @@ update_key = () ->
     .attr("y", (d,i) -> height - 25)
     .attr("text-anchor", "middle")
     .text (d,i) ->
-      if color_key == "percent_govt_leased"
+      if color_key == "percent_amount"
         "#{Math.round(d)}%"
       else
         if i == 1
