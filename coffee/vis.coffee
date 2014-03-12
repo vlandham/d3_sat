@@ -144,7 +144,7 @@ reset_projection = () ->
   last_drag = zoom_start
   update_map()
 
-size_key = "total_leased_rsf"
+size_key = "total_amount"
 color_key = "percent_amount"
 
 toggle_map = (type, new_key) ->
